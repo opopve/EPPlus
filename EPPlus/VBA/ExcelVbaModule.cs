@@ -29,9 +29,7 @@
  * Jan Källman		Added		26-MAR-2012
  *******************************************************************************/
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace OfficeOpenXml.VBA
 {
@@ -66,6 +64,7 @@ namespace OfficeOpenXml.VBA
     {
         string _name = "";
         ModuleNameChange _nameChangeCallback = null;
+        private static readonly char[] _nonValidChars = new char[] { '!', '\\', '"', '@', '#', '$', '%', '&', '/', '{', '}', '[', ']', '(', ')', '<', '>', '=', '+', '-', '?', '`', '~', '^', '\'', '*', ';', ':', ' ', '.', ' ', '«', '»' };
         internal ExcelVBAModule()
         {
             Attributes = new ExcelVbaModuleAttributesCollection();
@@ -78,48 +77,70 @@ namespace OfficeOpenXml.VBA
         /// <summary>
         /// The name of the module
         /// </summary>
-        public string Name 
-        {   
-            get
-            {
+        public string Name
+        {
+            get {
                 return _name;
             }
-            set
-            {
-                if (value.Any(c => c > 255))
+            set {
+                if(!IsValidModuleName(value))
                 {
-                    throw (new InvalidOperationException("Vba module names can't contain unicode characters"));
+                    throw (new InvalidOperationException("Name contains invalid characters"));
                 }
-                if (value != _name)
+                if(value != _name)
                 {
                     _name = value;
                     streamName = value;
-                    if (_nameChangeCallback != null)
+                    if(_nameChangeCallback != null)
                     {
                         _nameChangeCallback(value);
                     }
                 }
             }
         }
+
+        /// <summary>
+        /// Module name unicode
+        /// </summary>
+        internal string NameUnicode { get; set; }
+
+        internal static bool IsValidModuleName(string name)
+        {
+            if(string.IsNullOrEmpty(name) ||   //Not null or empty
+               char.IsLetter(name[0]) == false ||        //Don't start with a number or underscore
+               name.Any(x => x < 0x30 || IsAbove255AndNotLetter(x) || _nonValidChars.Contains(x))) //Don't contain invalid chars. Allow unicode
+            {
+                return false;
+            }
+            return true;
+        }
+
+        static bool IsAbove255AndNotLetter(char c)
+        {
+            if(c > 255)
+            {
+                return (char.IsLetter(c) == false);
+            }
+            return false;
+        }
         /// <summary>
         /// A description of the module
         /// </summary>
         public string Description { get; set; }
-        private string _code="";
+        private string _code = "";
         /// <summary>
         /// The code without any module level attributes.
         /// <remarks>Can contain function level attributes.</remarks> 
         /// </summary>
-        public string Code {
-            get
-            {
+        public string Code
+        {
+            get {
                 return _code;
             }
-            set
-            {
-                if(value.StartsWith("Attribute",StringComparison.OrdinalIgnoreCase) || value.StartsWith("VERSION",StringComparison.OrdinalIgnoreCase))
+            set {
+                if(value.StartsWith("Attribute", StringComparison.OrdinalIgnoreCase) || value.StartsWith("VERSION", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw(new InvalidOperationException("Code can't start with an Attribute or VERSION keyword. Attributes can be accessed through the Attributes collection."));
+                    throw (new InvalidOperationException("Code can't start with an Attribute or VERSION keyword. Attributes can be accessed through the Attributes collection."));
                 }
                 _code = value;
             }
@@ -148,6 +169,10 @@ namespace OfficeOpenXml.VBA
         internal ushort Cookie { get; set; }
         internal uint ModuleOffset { get; set; }
         internal string ClassID { get; set; }
+        /// <summary>
+        /// Converts the object to a string
+        /// </summary>
+        /// <returns>The name of the VBA module</returns>
         public override string ToString()
         {
             return Name;
