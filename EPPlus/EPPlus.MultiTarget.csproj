@@ -4,7 +4,7 @@
     <TargetFrameworks>netstandard2.1;netstandard2.0;net35;net40</TargetFrameworks>
     <AssemblyVersion>4.5.3.3</AssemblyVersion>
     <FileVersion>4.5.3.3</FileVersion>
-    <Version>4.5.3.4-pre-01</Version>
+    <Version>4.5.3.4-pre-02</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/JanKallman/EPPlus</PackageProjectUrl>
